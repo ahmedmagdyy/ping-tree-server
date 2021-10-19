@@ -55,6 +55,16 @@ test.serial.cb('healthcheck', function (t) {
   })
 })
 
+test.serial.cb('get empty targets', function (t) {
+  const getUrl = '/api/targets'
+  const getOpts = { method: 'GET', encoding: 'json' }
+  servertest(server(), getUrl, getOpts, (_err, res) => {
+    t.is(res.statusCode, 200)
+    t.deepEqual(res.body, [])
+    t.end()
+  })
+})
+
 test.serial.cb('add target', function (t) {
   const postUrl = '/api/targets'
   const postOpts = { method: 'POST', encoding: 'json' }
@@ -85,6 +95,15 @@ test.serial.cb('get target by id', function (t) {
   })
 })
 
+test.serial.cb('get target by id not found', function (t) {
+  const getUrl = '/api/targets/100'
+  const getOpts = { method: 'GET', encoding: 'json' }
+  servertest(server(), getUrl, getOpts, (_err, res) => {
+    t.deepEqual(res.body, { error: 'Target not found!' })
+    t.end()
+  })
+})
+
 test.serial.cb('update target by id', function (t) {
   const updateUrl = '/api/targets/1'
   const updateOpts = { method: 'POST', encoding: 'json' }
@@ -93,6 +112,16 @@ test.serial.cb('update target by id', function (t) {
     t.is(res.statusCode, 200)
     t.deepEqual(res.body, updateTargetMockObj)
     t.notDeepEqual(res.body, targetMockObj)
+    t.end()
+  }).end(JSON.stringify(updateTargetMockObj))
+})
+
+test.serial.cb('update target by id not found', function (t) {
+  const updateUrl = '/api/targets/100'
+  const updateOpts = { method: 'POST', encoding: 'json' }
+
+  servertest(server(), updateUrl, updateOpts, (_err, res) => {
+    t.deepEqual(res.body, { error: "Target doesn't Exists" })
     t.end()
   }).end(JSON.stringify(updateTargetMockObj))
 })
