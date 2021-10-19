@@ -131,7 +131,7 @@ test.serial.cb('post route decision', function (t) {
   const postOpts = { method: 'POST', encoding: 'json' }
   servertest(server(), postUrl, postOpts, (_err, res) => {
     t.is(res.statusCode, 200)
-    t.deepEqual(res.body, updateTargetMockObj)
+    t.deepEqual(res.body, { url: updateTargetMockObj.url })
     t.end()
   }).end(JSON.stringify(routeDecisionBody))
 })
@@ -140,6 +140,7 @@ test.serial.cb('post route decision with wrong data', function (t) {
   const postUrl = '/route'
   const postOpts = { method: 'POST', encoding: 'json' }
   servertest(server(), postUrl, postOpts, (_err, res) => {
+    console.log(res.body)
     t.deepEqual(res.body, { error: 'Invalid geostate or timestamp!' })
     t.end()
   }).end(JSON.stringify(wrongRouteDecisionBody))
