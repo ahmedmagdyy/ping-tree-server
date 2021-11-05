@@ -15,6 +15,33 @@ const targetMockObj = {
     },
     hour: {
       $in: ['13', '14', '15']
+    },
+    zipcode: {
+      $in: ['10001', '10002']
+    },
+    salary: {
+      $in: ['150000', '175000']
+    }
+  }
+}
+
+const secondTargetMockObj = {
+  id: '2',
+  url: 'http://example.v2.com',
+  value: '0.20',
+  maxAcceptsPerDay: '8',
+  accept: {
+    geoState: {
+      $in: ['ca', 'ny']
+    },
+    hour: {
+      $in: ['13', '14', '15']
+    },
+    zipcode: {
+      $in: ['20002', '20003']
+    },
+    salary: {
+      $in: ['200000', '225000']
     }
   }
 }
@@ -29,14 +56,32 @@ const updateTargetMockObj = {
       $in: ['la', 'ny', 'tx']
     },
     hour: {
-      $in: ['21', '12', '9']
+      $in: ['21', '13', '9']
+    },
+    zipcode: {
+      $in: ['10001', '10002']
+    },
+    salary: {
+      $in: ['150000', '175000']
     }
   }
 }
 
-const routeDecisionBody = {
-  geoState: 'tx',
-  timestamp: '2018-07-19T21:28:59.513Z'
+const firstDecisionBody = {
+  geoState: 'ny',
+  timestamp: '2018-07-19T13:28:59.513Z'
+}
+
+const firstDecisionBodyModified = {
+  salary: '150000',
+  zipcode: '10001'
+}
+
+const secondDecisionBody = {
+  geoState: 'ny',
+  timestamp: '2018-07-19T13:28:59.513Z',
+  salary: '200000',
+  zipcode: '20002'
 }
 
 const wrongRouteDecisionBody = {
@@ -75,12 +120,22 @@ test.serial.cb('add target', function (t) {
   }).end(JSON.stringify(targetMockObj))
 })
 
+test.serial.cb('add second target', function (t) {
+  const postUrl = '/api/targets'
+  const postOpts = { method: 'POST', encoding: 'json' }
+  servertest(server(), postUrl, postOpts, (_err, res) => {
+    t.is(res.statusCode, 200)
+    t.deepEqual(res.body, secondTargetMockObj)
+    t.end()
+  }).end(JSON.stringify(secondTargetMockObj))
+})
+
 test.serial.cb('get targets', function (t) {
   const getUrl = '/api/targets'
   const getOpts = { method: 'GET', encoding: 'json' }
   servertest(server(), getUrl, getOpts, (_err, res) => {
     t.is(res.statusCode, 200)
-    t.deepEqual(res.body, [targetMockObj])
+    t.deepEqual(res.body, [targetMockObj, secondTargetMockObj])
     t.end()
   })
 })
@@ -126,6 +181,7 @@ test.serial.cb('update target by id not found', function (t) {
   }).end(JSON.stringify(updateTargetMockObj))
 })
 
+// this test will return url with id 1 -> http://example.com
 test.serial.cb('post route decision', function (t) {
   const postUrl = '/route'
   const postOpts = { method: 'POST', encoding: 'json' }
@@ -133,15 +189,35 @@ test.serial.cb('post route decision', function (t) {
     t.is(res.statusCode, 200)
     t.deepEqual(res.body, { url: updateTargetMockObj.url })
     t.end()
-  }).end(JSON.stringify(routeDecisionBody))
+  }).end(JSON.stringify(firstDecisionBody))
+})
+
+test.serial.cb('post route decision based on salary and zipcode only', function (t) {
+  const postUrl = '/route'
+  const postOpts = { method: 'POST', encoding: 'json' }
+  servertest(server(), postUrl, postOpts, (_err, res) => {
+    t.is(res.statusCode, 200)
+    t.deepEqual(res.body, { url: updateTargetMockObj.url })
+    t.end()
+  }).end(JSON.stringify(firstDecisionBodyModified))
 })
 
 test.serial.cb('post route decision with wrong data', function (t) {
   const postUrl = '/route'
   const postOpts = { method: 'POST', encoding: 'json' }
   servertest(server(), postUrl, postOpts, (_err, res) => {
-    console.log(res.body)
     t.deepEqual(res.body, { error: 'Invalid geostate or timestamp!' })
     t.end()
   }).end(JSON.stringify(wrongRouteDecisionBody))
+})
+
+// this test will return url with id 2 -> http://example.v2.com
+test.serial.cb('post route decision based on second target data', function (t) {
+  const postUrl = '/route'
+  const postOpts = { method: 'POST', encoding: 'json' }
+  servertest(server(), postUrl, postOpts, (_err, res) => {
+    t.is(res.statusCode, 200)
+    t.deepEqual(res.body, { url: secondTargetMockObj.url })
+    t.end()
+  }).end(JSON.stringify(secondDecisionBody))
 })
